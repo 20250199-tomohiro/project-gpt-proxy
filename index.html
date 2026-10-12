@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0b1020">
+  <title>Web Proxy</title>
+  <style>
+    :root { color-scheme: dark; font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+    * { box-sizing: border-box; }
+    body { margin: 0; min-height: 100vh; color: #f4f6ff; background: radial-gradient(ellipse at top, #1a2850 0, #0b1020 58%, #080b14 100%); }
+    main { width: min(760px, calc(100% - 36px)); margin: 0 auto; min-height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 48px 0 40px; }
+    .mark { width: 64px; height: 64px; border-radius: 20px; display: grid; place-items: center; background: linear-gradient(135deg, #8aa5ff, #8068f2); box-shadow: 0 12px 42px #637cff35; margin-bottom: 22px; }
+    .mark svg { width: 34px; height: 34px; }
+    h1 { margin: 0; font-size: clamp(32px, 6vw, 48px); line-height: 1.1; letter-spacing: -1.5px; }
+    .sub { margin: 14px 0 30px; color: #adb9da; text-align: center; font-size: 15px; line-height: 1.7; }
+    form { display: flex; width: 100%; padding: 8px; gap: 8px; border: 1px solid #38466c; background: #111a31dd; border-radius: 18px; box-shadow: 0 18px 60px #0004; }
+    input { flex: 1; min-width: 0; border: 0; outline: 0; padding: 15px 14px; color: #fff; background: transparent; font-size: 16px; }
+    input::placeholder { color: #8290b2; }
+    button { border: 0; border-radius: 12px; padding: 0 22px; background: #7f91ff; color: #0b1020; font-weight: 750; font-size: 15px; cursor: pointer; transition: filter .15s, transform .15s; }
+    button:hover { filter: brightness(1.08); }
+    button:active { transform: scale(.98); }
+    .examples { width: 100%; margin-top: 20px; display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
+    .example { background: #ffffff0b; border: 1px solid #2c3858; color: #bdc8e4; border-radius: 999px; padding: 7px 12px; font-size: 13px; cursor: pointer; }
+    .example:hover { background: #ffffff15; }
+    .notice { margin-top: 44px; max-width: 620px; color: #8290b2; font-size: 12px; text-align: center; line-height: 1.8; }
+    .error { display: none; margin-top: 14px; color: #ffc4c4; font-size: 13px; }
+    @media (max-width: 520px) { form { flex-direction: column; } input { padding: 14px 12px; } button { min-height: 48px; } .sub { margin-bottom: 24px; } }
+  </style>
+</head>
+<body>
+  <main>
+    <div class="mark" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a15 15 0 0 1 0 18M12 3a15 15 0 0 0 0 18"/></svg>
+    </div>
+    <h1>Web Proxy</h1>
+    <p class="sub">アクセスしたいサイトのアドレスを入力してください。<br>公開されているHTTP / HTTPSサイト向けの簡易プロキシです。</p>
+    <form id="go-form" autocomplete="off">
+      <input id="url" name="url" type="text" inputmode="url" placeholder="https://example.com" aria-label="サイトのアドレス" spellcheck="false" required>
+      <button type="submit">サイトへ移動 ↗</button>
+    </form>
+    <div class="error" id="error" role="alert">http:// または https:// で始まるアドレスを入力してください。</div>
+    <div class="examples" aria-label="サンプル">
+      <button class="example" type="button" data-url="https://example.com">example.com</button>
+      <button class="example" type="button" data-url="https://www.wikipedia.org">Wikipedia</button>
+      <button class="example" type="button" data-url="https://developer.mozilla.org">MDN</button>
+    </div>
+    <p class="notice">注意：このプロキシは公開ページの閲覧を想定した簡易版です。ログイン、動画再生、フォーム、複雑なJavaScriptを使うサイトは正常に動作しない場合があります。個人情報やパスワードは入力しないでください。</p>
+  </main>
+  <script>
+    const form = document.getElementById('go-form');
+    const input = document.getElementById('url');
+    const error = document.getElementById('error');
+    function normalizeUrl(value) {
+      const trimmed = value.trim();
+      if (!trimmed) return null;
+      const withScheme = /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
+      try {
+        const parsed = new URL(withScheme);
+        if (!['http:', 'https:'].includes(parsed.protocol)) return null;
+        return parsed.href;
+      } catch { return null; }
+    }
+    form.addEventListener('submit', (event) => {
+      event.preventDefault();
+      const target = normalizeUrl(input.value);
+      if (!target) { error.style.display = 'block'; input.focus(); return; }
+      error.style.display = 'none';
+      window.location.href = `/proxy?url=${encodeURIComponent(target)}`;
+    });
+    document.querySelectorAll('[data-url]').forEach((button) => {
+      button.addEventListener('click', () => { input.value = button.dataset.url; form.requestSubmit(); });
+    });
+    input.focus();
+  </script>
+</body>
+</html>
